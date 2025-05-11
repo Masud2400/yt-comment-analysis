@@ -30,7 +30,7 @@ function fetchComments(url) {
   ytDlp.on('close', (code) => {
     if (code === 0) {
       console.log(`Comments saved to ${filename}`);
-      readAndPrintComments(filepath);
+      readAndSaveCommentsToTextFile(filepath);  // Updated function call
     } else {
       console.error(`yt-dlp exited with code ${code}`);
       cleanupTempFile(filepath);
@@ -38,7 +38,23 @@ function fetchComments(url) {
   });
 }
 
-function readAndPrintComments(filepath) {
+function saveCommentsToTextFile(filepath, comments) {
+  const textFileName = path.basename(filepath, '.json') + '.txt';
+  const textFilePath = path.join(__dirname, textFileName);
+
+  // Format the comments as plain text with numbered lines
+  const commentTexts = comments.map((comment, index) => `${index + 1}: ${comment.text}`);
+
+  fs.writeFile(textFilePath, commentTexts.join('\n'), (err) => {
+    if (err) {
+      console.error('Error saving comments to text file:', err);
+    } else {
+      console.log(`Comments saved to ${textFilePath}`);
+    }
+  });
+}
+
+function readAndSaveCommentsToTextFile(filepath) {
   fs.readFile(filepath, 'utf8', (err, data) => {
     if (err) {
       console.error('Error reading file:', err);
@@ -59,11 +75,7 @@ function readAndPrintComments(filepath) {
       return cleanupTempFile(filepath);
     }
 
-    const commentTexts = comments.map(comment => comment.text);
-    console.log('\nExtracted Comments:');
-    commentTexts.forEach((comment, index) => {
-      console.log(`${index + 1}: ${comment}`);
-    });
+    saveCommentsToTextFile(filepath, comments);  // Save comments to text file instead of printing
 
     cleanupTempFile(filepath);
   });
@@ -77,5 +89,6 @@ function cleanupTempFile(filepath) {
   });
 }
 
-const userProvidedUrl = 'https://www.youtube.com/watch?v=TC7bCrZSZ6w&t=1s';
+const userProvidedUrl = 'https://www.youtube.com/watch?v=xz2WfAcurGg&t=1s';
 fetchComments(userProvidedUrl);
+
