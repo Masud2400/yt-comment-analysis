@@ -1,0 +1,11 @@
+{
+  "name": "yt-creators-helper",
+  "version": "1.0.0",
+  "description": "This is the helper for youtube creators to get the statistics of their vidoes",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mas'ud",
+  "license": "ISC"
+}
