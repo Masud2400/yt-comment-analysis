@@ -1,8 +1,11 @@
+require('dotenv').config();
+
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
 
+// --- Fetch comments from YouTube ---
 function fetchComments(url) {
   if (!/^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/.test(url)) {
     console.error('Invalid YouTube URL');
@@ -29,33 +32,61 @@ function fetchComments(url) {
 
   ytDlp.on('close', (code) => {
     if (code === 0) {
-      console.log(`Comments saved to ${filename}`);
-      readAndSaveCommentsToTextFile(filepath);  // Updated function call
+      console.log(`✅ Comments saved temporarily to ${filename}`);
+      readAndSendCommentsToGemini(filepath);
     } else {
-      console.error(`yt-dlp exited with code ${code}`);
+      console.error(`❌ yt-dlp exited with code ${code}`);
       cleanupTempFile(filepath);
     }
   });
 }
 
-function saveCommentsToTextFile(filepath, comments) {
-  const textFileName = path.basename(filepath, '.json') + '.txt';
-  const textFilePath = path.join(__dirname, textFileName);
+// --- Send parsed comments to Gemini API ---
+async function sendCommentsToGemini(comments) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'; // Updated endpoint
 
-  // Format the comments as plain text with numbered lines
-  const commentTexts = comments.map((comment, index) => `${index + 1}: ${comment.text}`);
+  const prompt = comments
+    .filter(c => c.text && typeof c.text === 'string') // skip empty or invalid
+    .slice(0, 1000) // Limit to first 1000 comments to avoid token overload
+    .map((c, i) => `${i + 1}. ${c.text}`)
+    .join('\n');
 
-  fs.writeFile(textFilePath, commentTexts.join('\n'), (err) => {
-    if (err) {
-      console.error('Error saving comments to text file:', err);
-    } else {
-      console.log(`Comments saved to ${textFilePath}`);
-    }
-  });
+  const payload = {
+    contents: [
+      {
+        parts: [
+          {
+            text: `Analyze the sentiment and themes in the following YouTube comments. Provide the following insights: The percentage of positive, neutral, and negative comments. Rate the video from 1 to 10 based on the overall sentiment of the comments. Provide the top 5 positive comments and the top 5 negative comments based on sentiment. Categorize the comments into themes (e.g., content quality, presentation, pacing, etc.) and display one example comment from each category. Based on the analysis, provide insights into what aspects of the video to focus on or improve for future videos (e.g., improve pacing, clarify certain topics, etc.). Provide one summary conclusion or recommendation for improving the video:\n\n${prompt}`
+          }
+        ]
+      }
+    ]
+  };
+
+  try {
+    const res = await fetch(`${endpoint}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    // Try to extract response content
+    const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini';
+    console.log('\n🔍 Gemini Analysis:\n');
+    console.log(responseText);
+  } catch (err) {
+    console.error('❌ Error calling Gemini API:', err);
+  }
 }
 
-function readAndSaveCommentsToTextFile(filepath) {
-  fs.readFile(filepath, 'utf8', (err, data) => {
+// --- Read saved comments and send to Gemini ---
+function readAndSendCommentsToGemini(filepath) {
+  fs.readFile(filepath, 'utf8', async (err, data) => {
     if (err) {
       console.error('Error reading file:', err);
       return cleanupTempFile(filepath);
@@ -66,21 +97,20 @@ function readAndSaveCommentsToTextFile(filepath) {
       comments = JSON.parse(data);
     } catch (parseErr) {
       console.error('Failed to parse JSON:', parseErr);
-      console.error('Raw file content:', data); 
       return cleanupTempFile(filepath);
     }
 
     if (!Array.isArray(comments) || comments.length === 0) {
-      console.log('No comments found — comments might be disabled on this video.');
+      console.log('No comments found — they may be disabled.');
       return cleanupTempFile(filepath);
     }
 
-    saveCommentsToTextFile(filepath, comments);  // Save comments to text file instead of printing
-
+    await sendCommentsToGemini(comments);
     cleanupTempFile(filepath);
   });
 }
 
+// --- Delete temp file after use ---
 function cleanupTempFile(filepath) {
   fs.unlink(filepath, (err) => {
     if (err) {
@@ -89,6 +119,11 @@ function cleanupTempFile(filepath) {
   });
 }
 
-const userProvidedUrl = 'https://www.youtube.com/watch?v=xz2WfAcurGg&t=1s';
+// --- Run the process ---
+const userProvidedUrl = 'https://www.youtube.com/watch?v=jvqVzH__p0A';
 fetchComments(userProvidedUrl);
+
+
+
+
 
