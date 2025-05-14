@@ -9,6 +9,7 @@
   "author": "Mas'ud",
   "license": "ISC",
   "dependencies": {
+    "discord.js": "^14.19.3",
     "dotenv": "^16.5.0"
   }
 }

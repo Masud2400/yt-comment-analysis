@@ -4,7 +4,7 @@ async function sendCommentsToGemini(comments) {
 
   const prompt = comments
     .filter(c => c.text && typeof c.text === 'string') // skip empty or invalid
-    .slice(0, 1000) // Limit to first 1000 comments to avoid token overload
+    .slice(0, 10000) // Limit to first 10000 comments to avoid token overload
     .map((c, i) => `${i + 1}. ${c.text}`)
     .join('\n');
 
