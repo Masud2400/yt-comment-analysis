@@ -1,5 +1,5 @@
-// src/bot.js
 const { Client, GatewayIntentBits, Partials, ChannelType } = require('discord.js');
+const { fetchComments } = require('./fetchComments');
 
 const client = new Client({
     intents: [
@@ -71,9 +71,17 @@ async function processUserQueue(userId) {
         try {
             await message.channel.send(`🔄 Processing your URL: ${url}`);
 
-            // Here you can replace this with your actual processing, e.g. fetchComments(url)
-            // For now, we just simulate a delay:
-            await simulateProcessing(url);
+            // Call fetchComments and get the Gemini analysis
+            const analysis = await fetchComments(url);
+
+            // Send the analysis to the user (split if too long for Discord)
+            if (analysis.length > 2000) {
+                for (let i = 0; i < analysis.length; i += 2000) {
+                    await message.channel.send(analysis.slice(i, i + 2000));
+                }
+            } else {
+                await message.channel.send(analysis);
+            }
 
             await message.channel.send(`✅ Done processing your URL: ${url}`);
 
@@ -90,11 +98,6 @@ async function processUserQueue(userId) {
 
     userProcessing.delete(userId);
     userQueues.delete(userId);
-}
-
-// Simulate async processing, replace with your real task
-function simulateProcessing(url) {
-    return new Promise((res) => setTimeout(res, 3000));
 }
 
 // ---
