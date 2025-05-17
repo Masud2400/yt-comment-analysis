@@ -1,19 +1,23 @@
 require('dotenv').config();
 const { fetchComments } = require('./src/fetchComments');
-const { waitForMessage } = require('./src/bot.js');
+const { waitForMessageFromUser } = require('./src/bot');
 
-// Main function to run the bot and fetch comments
 async function main() {
-    // Wait for the bot to receive a message
-    const userMessage = await waitForMessage();
+    console.log('🤖 Bot is listening for YouTube URLs in DMs...');
 
-    // YouTube URL from the user's message
-    const userProvidedUrl = userMessage;
+    while (true) {
+        try {
+            // Now receives { url, userId }
+            const { url, userId } = await waitForMessageFromUser();
+            console.log(`✅ Received URL from user ${userId}:`, url);
 
-    // Fetch comments based on the URL
-    fetchComments(userProvidedUrl);
+            // Use the url for fetching comments (modify fetchComments if needed)
+            fetchComments(url);
+        } catch (err) {
+            console.error('❌ Error while handling message:', err);
+        }
+    }
 }
 
-// Start the bot and run the main function
 main();
 
