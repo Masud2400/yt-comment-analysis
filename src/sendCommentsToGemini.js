@@ -13,7 +13,7 @@ async function sendCommentsToGemini(comments) {
       {
         parts: [
           {
-            text: `Analyze the sentiment and themes in the following YouTube comments. Provide the following insights: The percentage of positive, neutral, and negative comments. Rate the video from 1 to 10 based on the overall sentiment of the comments. Provide the top 5 positive comments and the top 5 negative comments based on sentiment. Categorize the comments into themes (e.g., content quality, presentation, pacing, etc.) and display one example comment from each category. Based on the analysis, provide insights into what aspects of the video to focus on or improve for future videos (e.g., improve pacing, clarify certain topics, etc.). Provide one summary conclusion or recommendation for improving the video:\n\n${prompt}`
+            text: `First tell me how many comments you have analyzed. Analyze the sentiment and themes in the following YouTube comments. Provide the following insights: The percentage of positive, neutral, and negative comments. Rate the video from 1 to 10 based on the overall sentiment of the comments. Provide the top 5 positive comments and the top 5 negative comments based on sentiment. Categorize the comments into themes (e.g., content quality, presentation, pacing, etc.) and display one example comment from each category. Based on the analysis, provide insights into what aspects of the video to focus on or improve for future videos (e.g., improve pacing, clarify certain topics, etc.). Provide one summary conclusion or recommendation for improving the video:\n\n${prompt}`
           }
         ]
       }
