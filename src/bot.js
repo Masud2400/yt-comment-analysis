@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, Partials, ChannelType } = require('discord.js');
 const { fetchComments } = require('./fetchComments');
+const { checkAndUpdateUser } = require('./database'); // Add this import
 
 const client = new Client({
     intents: [
@@ -34,6 +35,13 @@ function startBot() {
         }
 
         const userId = message.author.id;
+
+        // Check and update user tries BEFORE adding to queue
+        const allowed = await checkAndUpdateUser(userId);
+        if (!allowed) {
+            await message.reply('❌ You have used all your tries. Please wait 24 hours for a reset.');
+            return;
+        }
 
         // Add message to this user's queue
         if (!userQueues.has(userId)) {

@@ -7,12 +7,11 @@ async function main() {
 
     while (true) {
         try {
-            // Now receives { url, userId }
             const { url, userId } = await waitForMessageFromUser();
             console.log(`✅ Received URL from user ${userId}:`, url);
-
-            // Use the url for fetching comments (modify fetchComments if needed)
+            
             fetchComments(url);
+            
         } catch (err) {
             console.error('❌ Error while handling message:', err);
         }
