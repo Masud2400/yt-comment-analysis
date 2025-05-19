@@ -1,10 +1,11 @@
 const { Pool } = require('pg');
+require('dotenv').config();
 
 const pool = new Pool({
     user: 'masud',
     host: 'localhost',
     database: 'postgres',
-    password: 'new_password',
+    password: process.env.DB_KEY,
     port: 5432,
 });
 
@@ -38,7 +39,7 @@ async function checkAndUpdateUser(userId) {
 
         if (tries > 0) {
             await pool.query(
-                'UPDATE users SET tries = $1, timestamp = NOW() WHERE user_id = $2',
+                'UPDATE users SET tries = $1 WHERE user_id = $2',
                 [tries - 1, userId]
             );
             return true;
