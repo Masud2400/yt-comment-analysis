@@ -36,13 +36,6 @@ function startBot() {
 
         const userId = message.author.id;
 
-        // Check and update user tries BEFORE adding to queue
-        const allowed = await checkAndUpdateUser(userId);
-        if (!allowed) {
-            await message.reply('❌ You have used all your tries. Please wait 24 hours for a reset.');
-            return;
-        }
-
         // Add message to this user's queue
         if (!userQueues.has(userId)) {
             userQueues.set(userId, []);
@@ -79,10 +72,27 @@ async function processUserQueue(userId) {
         try {
             await message.channel.send(`🔄 Processing your URL: ${url}`);
 
-            // Call fetchComments and get the Gemini analysis
-            const analysis = await fetchComments(url);
+            // Fetch comments first
+            const result = await fetchComments(url);
+
+            if (result.noComments) {
+                await message.channel.send('❌ No comments were found.');
+                continue; // Do not decrement tries
+            }
+            if (result.error) {
+                await message.channel.send(result.error);
+                continue;
+            }
+
+            // Only now check and update user tries
+            const allowed = await checkAndUpdateUser(userId);
+            if (!allowed) {
+                await message.channel.send('❌ You have used all your tries. Please wait 24 hours for a reset.');
+                continue;
+            }
 
             // Send the analysis to the user (split if too long for Discord)
+            const analysis = result.analysis;
             if (analysis.length > 2000) {
                 for (let i = 0; i < analysis.length; i += 2000) {
                     await message.channel.send(analysis.slice(i, i + 2000));
@@ -93,7 +103,6 @@ async function processUserQueue(userId) {
 
             await message.channel.send(`✅ Done processing your URL: ${url}`);
 
-            // Optionally: notify your app that a message was processed
             if (typeof onProcessedMessage === 'function') {
                 onProcessedMessage(url, userId);
             }
