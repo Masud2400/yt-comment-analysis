@@ -7,8 +7,7 @@ async function main() {
 
     while (true) {
         try {
-            const { url, userId } = await waitForMessageFromUser();
-            console.log(`✅ Received URL from user ${userId}:`, url);
+            const { url } = await waitForMessageFromUser();
             
             fetchComments(url);
             
