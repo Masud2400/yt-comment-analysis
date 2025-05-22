@@ -9,7 +9,8 @@ const pool = new Pool({
     port: 5432,
 });
 
-async function checkAndUpdateUser(userId) {
+async function checkAndUpdateUser(userId, options = {}) {
+    const checkOnly = options.checkOnly || false;
     try {
         const { rows } = await pool.query(
             'SELECT tries, timestamp FROM users WHERE user_id = $1',
@@ -38,10 +39,12 @@ async function checkAndUpdateUser(userId) {
         }
 
         if (tries > 0) {
-            await pool.query(
-                'UPDATE users SET tries = $1 WHERE user_id = $2',
-                [tries - 1, userId]
-            );
+            if (!checkOnly) {
+                await pool.query(
+                    'UPDATE users SET tries = $1 WHERE user_id = $2',
+                    [tries - 1, userId]
+                );
+            }
             return true;
         }
 

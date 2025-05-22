@@ -72,26 +72,26 @@ async function processUserQueue(userId) {
         try {
             await message.channel.send(`🔄 Processing your URL: ${url}`);
 
-            // Fetch comments first
+            // 1. Check if user has tries left (but do NOT decrement yet)
+            const allowed = await checkAndUpdateUser(userId, { checkOnly: true });
+            if (!allowed) {
+                await message.channel.send('❌ You have used all your tries. Please wait 24 hours for a reset.');
+                continue;
+            }
+
+            // 2. Fetch comments and send to Gemini
             const result = await fetchComments(url);
 
             if (result.noComments) {
                 await message.channel.send('❌ No comments were found.');
-                continue; // Do not decrement tries
+                continue;
             }
             if (result.error) {
                 await message.channel.send(result.error);
                 continue;
             }
 
-            // Only now check and update user tries
-            const allowed = await checkAndUpdateUser(userId);
-            if (!allowed) {
-                await message.channel.send('❌ You have used all your tries. Please wait 24 hours for a reset.');
-                continue;
-            }
-
-            // Send the analysis to the user (split if too long for Discord)
+            // 3. Send the analysis to the user
             const analysis = result.analysis;
             if (analysis.length > 2000) {
                 for (let i = 0; i < analysis.length; i += 2000) {
@@ -102,6 +102,9 @@ async function processUserQueue(userId) {
             }
 
             await message.channel.send(`✅ Done processing your URL: ${url}`);
+
+            // 4. Now decrement tries (call checkAndUpdateUser without checkOnly)
+            await checkAndUpdateUser(userId);
 
             if (typeof onProcessedMessage === 'function') {
                 onProcessedMessage(url, userId);
