@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits, Partials, ChannelType } = require('discord.js');
 const { fetchComments } = require('./fetchComments');
 const { checkAndUpdateUser } = require('./database'); // Add this import
+const { youtubeUrlRegex } = require('./utils')
 
 const client = new Client({
     intents: [
@@ -9,8 +10,6 @@ const client = new Client({
     ],
     partials: [Partials.Channel],
 });
-
-const youtubeUrlRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
 
 const userQueues = new Map(); // Map<userId, Array of messages>
 const userProcessing = new Set(); // Set of userIds currently being processed
@@ -125,14 +124,14 @@ async function processUserQueue(userId) {
 // We'll keep a simple FIFO queue of processed URLs that your app.js can consume
 
 const processedMessages = [];
-let resolveNextProcessed = null;
+const waitingResolvers = []; // <-- Use an array
 
 // Called inside processUserQueue after each message processed
 function onProcessedMessage(url, userId) {
     processedMessages.push({ url, userId });
-    if (resolveNextProcessed) {
-        resolveNextProcessed(processedMessages.shift());
-        resolveNextProcessed = null;
+    if (waitingResolvers.length > 0) {
+        const resolve = waitingResolvers.shift();
+        resolve(processedMessages.shift());
     }
 }
 
@@ -144,7 +143,7 @@ function waitForMessageFromUser() {
             // If messages are ready, resolve immediately
             resolve(processedMessages.shift());
         } else {
-            resolveNextProcessed = resolve;
+            waitingResolvers.push(resolve);
         }
     });
 }

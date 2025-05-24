@@ -1,9 +1,10 @@
 const { spawn } = require('child_process');
 const { sendCommentsToGemini } = require('./sendCommentsToGemini');
+const { youtubeUrlRegex } = require('./utils'); // <-- Import the shared regex
 
 function fetchComments(url) {
   return new Promise((resolve) => {
-    if (!/^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/.test(url)) {
+    if (!youtubeUrlRegex.test(url)) { // <-- Use the shared regex
       console.error('Invalid YouTube URL');
       resolve({ error: '❌ Invalid YouTube URL.' });
       return;

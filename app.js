@@ -1,5 +1,4 @@
 require('dotenv').config();
-const { fetchComments } = require('./src/fetchComments');
 const { waitForMessageFromUser } = require('./src/bot');
 
 async function main() {
@@ -8,9 +7,7 @@ async function main() {
     while (true) {
         try {
             const { url } = await waitForMessageFromUser();
-            
-            fetchComments(url);
-            
+            // You can add custom logic here if you want to do something with the processed message.
         } catch (err) {
             console.error('❌ Error while handling message:', err);
         }
