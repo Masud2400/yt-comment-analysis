@@ -47,7 +47,6 @@ function fetchComments(url) {
             resolve({ noComments: true });
             return;
           }
-          console.log(`✅ Fetched ${comments.length} comments.`);
           const analysis = await sendCommentsToGemini(comments);
           resolve({ analysis });
         } catch (err) {
