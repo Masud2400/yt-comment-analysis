@@ -44,9 +44,7 @@ function startBot() {
         await message.reply('🎬 URL received! Added to your queue.');
 
         // If not already processing this user's queue, start now
-        if (!userProcessing.has(userId)) {
-            processUserQueue(userId);
-        }
+        processUserQueue(userId);
     });
 
     client.login(process.env.DISCORDJS_API_KEY).catch((err) => {
@@ -56,6 +54,7 @@ function startBot() {
 
 // Process one user’s queue sequentially
 async function processUserQueue(userId) {
+    if (userProcessing.has(userId)) return; // Prevent double-processing
     userProcessing.add(userId);
 
     const queue = userQueues.get(userId);
