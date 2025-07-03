@@ -24,7 +24,7 @@ function fetchComments(url) {
     });
 
     ytDlp.stderr.on('data', (data) => {
-      // console.error(`stderr: ${data}`);
+      console.error(`stderr: ${data}`);
     });
 
     ytDlp.on('close', async (code) => {
